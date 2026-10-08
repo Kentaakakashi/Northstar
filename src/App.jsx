@@ -1,4 +1,3 @@
-import { motion } from "motion/react";
 import BlurText from "./components/BlurText";
 import {
   ArrowUpRight,
@@ -117,13 +116,9 @@ function App() {
 
             <div className="goal-grid">
               {goals.map((goal, index) => (
-                <motion.article
+                <article
                   className="goal-card"
                   key={goal.title}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.18 + index * 0.08, duration: 0.5 }}
-                  whileHover={{ y: -3 }}
                 >
                   <div className="goal-card-top">
                     <span className={`goal-icon ${goal.accent}`}><Target size={17} /></span>
