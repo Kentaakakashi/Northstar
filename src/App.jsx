@@ -1,3 +1,4 @@
+import React from "react";
 import BlurText from "./components/BlurText";
 import {
   ArrowUpRight,
