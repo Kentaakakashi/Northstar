@@ -138,7 +138,7 @@ function App() {
                       </div>
                     ))}
                   </div>
-                </motion.article>
+                </article>
               ))}
 
               <button className="goal-card add-card">
