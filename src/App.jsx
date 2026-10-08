@@ -390,15 +390,39 @@ function GoalCapture({ onClose, onCreate }) {
 
 function App() {
   const [captureOpen, setCaptureOpen] = useState(false);
-  const [activeGoals, setActiveGoals] = useState(initialGoals);
+  const [activeGoals, setActiveGoals] = useState(() => {
+    try {
+      const saved = window.localStorage.getItem("northstar-goals");
+      return saved ? JSON.parse(saved) : initialGoals;
+    } catch {
+      return initialGoals;
+    }
+  });
   const [selectedGoal, setSelectedGoal] = useState(null);
   const [selectedRoute, setSelectedRoute] = useState("primary");
+  const [scenario, setScenario] = useState("baseline");
   const [activeNav, setActiveNav] = useState("today");
 
   useEffect(() => {
     document.body.style.overflow = captureOpen || selectedGoal ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [captureOpen, selectedGoal]);
+
+  useEffect(() => {
+    window.localStorage.setItem("northstar-goals", JSON.stringify(activeGoals));
+  }, [activeGoals]);
+
+  const scenarioAdjustments = {
+    baseline: { label: "Current reality", primary: 0, accelerated: 0, fallback: 0, copy: "Nothing has changed. Compare the route on today's assumptions." },
+    "more-time": { label: "I gain more time", primary: 3, accelerated: 8, fallback: -2, copy: "Extra capacity makes the faster route more viable without sacrificing the destination." },
+    "less-time": { label: "My time gets tighter", primary: 4, accelerated: -12, fallback: 6, copy: "A tighter schedule makes resilience more valuable and the aggressive route less forgiving." },
+    "money-shifts": { label: "Money gets tighter", primary: 1, accelerated: -8, fallback: 9, copy: "The backup route rises because it keeps more options open under financial pressure." },
+  };
+
+  const routeFitForScenario = (route) => Math.max(
+    55,
+    Math.min(98, route.fit + scenarioAdjustments[scenario][route.id] )
+  );
 
   const handleCreateGoal = ({ goal, answers, goalType }) => {
     const category = goalType === "general" ? "Goal" : goalType[0].toUpperCase() + goalType.slice(1);
@@ -515,8 +539,29 @@ function App() {
               <span className="route-meta">3 viable paths</span>
             </div>
             <div className="route-lab">
-              <div className="route-choice-list">{routeOptions.map((route) => <RouteCard key={route.id} route={route} selected={selectedRoute === route.id} onSelect={setSelectedRoute} />)}</div>
-              <RouteMap />
+              <div className="route-choice-list">
+                {routeOptions.map((route) => {
+                  const adjusted = { ...route, fit: routeFitForScenario(route) };
+                  return <RouteCard key={route.id} route={adjusted} selected={selectedRoute === route.id} onSelect={setSelectedRoute} />;
+                })}
+              </div>
+              <div className="route-map-wrap">
+                <RouteMap />
+                <div className="scenario-panel">
+                  <div>
+                    <span className="micro-label">WHAT-IF SIMULATOR</span>
+                    <strong>{scenarioAdjustments[scenario].label}</strong>
+                    <p>{scenarioAdjustments[scenario].copy}</p>
+                  </div>
+                  <div className="scenario-options">
+                    {Object.entries(scenarioAdjustments).map(([id, item]) => (
+                      <button key={id} className={`scenario-option ${scenario === id ? "selected" : ""}`} onClick={() => setScenario(id)}>
+                        {id === "baseline" ? "Today" : id === "more-time" ? "More time" : id === "less-time" ? "Less time" : "Money shifts"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
 
