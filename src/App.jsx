@@ -1,5 +1,4 @@
-import React from "react";
-import BlurText from "./components/BlurText";
+import React, { useEffect, useState } from "react";
 import {
   ArrowUpRight,
   ChevronRight,
@@ -9,7 +8,9 @@ import {
   Sparkles,
   Target,
   TrendingUp,
+  X,
 } from "lucide-react";
+import BlurText from "./components/BlurText";
 
 const goals = [
   {
@@ -28,6 +29,14 @@ const goals = [
     accent: "green",
     milestones: ["Baseline", "Training system", "Consistency"],
   },
+];
+
+const placeholders = [
+  "I want to get into IIT...",
+  "I want to build a successful business...",
+  "I want to get stronger...",
+  "I want to travel through Japan...",
+  "I want to learn cybersecurity...",
 ];
 
 function RoutePreview() {
@@ -51,7 +60,78 @@ function RoutePreview() {
   );
 }
 
+function GoalCapture({ onClose }) {
+  const [goal, setGoal] = useState("");
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setPlaceholderIndex((current) => (current + 1) % placeholders.length);
+    }, 3200);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const submit = (event) => {
+    event.preventDefault();
+    if (!goal.trim()) return;
+    window.alert("Goal captured. The adaptive interview is the next Northstar step.");
+  };
+
+  return (
+    <div className="goal-overlay" role="dialog" aria-modal="true" aria-labelledby="goal-capture-title">
+      <button className="goal-overlay-backdrop" aria-label="Close" onClick={onClose} />
+      <section className="goal-capture">
+        <button className="goal-close" onClick={onClose} aria-label="Close goal capture">
+          <X size={17} />
+        </button>
+
+        <div className="goal-capture-icon">
+          <Compass size={19} />
+        </div>
+        <p className="eyebrow">NEW NORTHSTAR</p>
+        <h2 id="goal-capture-title">What are you trying to achieve?</h2>
+        <p className="goal-capture-copy">
+          Don’t turn it into a plan yet. Just tell Northstar what you want in your own words.
+        </p>
+
+        <form onSubmit={submit}>
+          <div className="goal-input-wrap">
+            <textarea
+              autoFocus
+              value={goal}
+              onChange={(event) => setGoal(event.target.value)}
+              placeholder={placeholders[placeholderIndex]}
+              rows={3}
+              aria-label="Describe your goal"
+            />
+            <div className="goal-input-footer">
+              <span>{goal.length ? "Northstar is listening." : "Be specific or be vague. We’ll figure it out."}</span>
+              <button className="capture-submit" type="submit" disabled={!goal.trim()}>
+                Continue <ArrowUpRight size={15} />
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <div className="capture-hint">
+          <Sparkles size={13} />
+          <span>Northstar will ask the questions that actually matter next.</span>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function App() {
+  const [captureOpen, setCaptureOpen] = useState(false);
+
+  useEffect(() => {
+    document.body.style.overflow = captureOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [captureOpen]);
+
   return (
     <main className="app-shell">
       <aside className="sidebar">
@@ -88,14 +168,18 @@ function App() {
           <section className="hero" id="today">
             <div className="hero-copy">
               <p className="eyebrow"><Sparkles size={13} /> YOUR NEXT BEST MOVE</p>
-              <h1><BlurText text="Know where you’re going." delay={55} stepDuration={0.3} /></h1>
+              <h1><BlurText text="Know where you’re going." delay={55} /></h1>
               <p className="hero-sub">
                 Northstar turns a goal into a living route — shaped around your reality,
                 not some generic productivity template.
               </p>
               <div className="hero-actions">
-                <button className="button button-primary"><Plus size={16} /> Add a goal</button>
-                <button className="button button-quiet">View your routes <ArrowUpRight size={15} /></button>
+                <button className="button button-primary" onClick={() => setCaptureOpen(true)}>
+                  <Plus size={16} /> Add a goal
+                </button>
+                <a className="button button-quiet" href="#routes">
+                  View your routes <ArrowUpRight size={15} />
+                </a>
               </div>
             </div>
             <div className="hero-orbit" aria-hidden="true">
@@ -116,11 +200,8 @@ function App() {
             </div>
 
             <div className="goal-grid">
-              {goals.map((goal, index) => (
-                <article
-                  className="goal-card"
-                  key={goal.title}
-                >
+              {goals.map((goal) => (
+                <article className="goal-card" key={goal.title}>
                   <div className="goal-card-top">
                     <span className={`goal-icon ${goal.accent}`}><Target size={17} /></span>
                     <span className="card-arrow"><ArrowUpRight size={17} /></span>
@@ -142,7 +223,7 @@ function App() {
                 </article>
               ))}
 
-              <button className="goal-card add-card">
+              <button className="goal-card add-card" onClick={() => setCaptureOpen(true)}>
                 <span className="add-icon"><Plus size={18} /></span>
                 <strong>Start another goal</strong>
                 <span>Tell Northstar what you want. We’ll figure out what matters next.</span>
@@ -179,6 +260,8 @@ function App() {
           </footer>
         </div>
       </section>
+
+      {captureOpen && <GoalCapture onClose={() => setCaptureOpen(false)} />}
     </main>
   );
 }
