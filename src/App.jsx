@@ -62,6 +62,8 @@ function RoutePreview() {
 
 function GoalCapture({ onClose }) {
   const [goal, setGoal] = useState("");
+  const [step, setStep] = useState(0);
+  const [answers, setAnswers] = useState({});
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
   useEffect(() => {
@@ -71,19 +73,47 @@ function GoalCapture({ onClose }) {
     return () => window.clearInterval(timer);
   }, []);
 
+  const questions = [
+    { label: "CURRENT POSITION", title: "Where are you starting from?", hint: "Northstar needs your actual starting point, not the version you wish you were at.", options: ["Starting from scratch", "I know the basics", "Already making progress", "I’m already close"] },
+    { label: "TIME & CAPACITY", title: "How much can you realistically give this?", hint: "We’ll use this to avoid building a plan you cannot sustain.", options: ["30–60 min / day", "1–2 hours / day", "2–4 hours / day", "It depends on the day"] },
+    { label: "CONSTRAINTS", title: "What could get in the way?", hint: "Money, school, work, family, location, health — anything that changes the route matters.", options: ["Money", "Time", "Knowledge / skills", "Nothing major"] },
+  ];
+
   const submit = (event) => {
     event.preventDefault();
     if (!goal.trim()) return;
-    window.alert("Goal captured. The adaptive interview is the next Northstar step.");
+    setStep(1);
+  };
+
+  const answer = (value) => {
+    setAnswers((current) => ({ ...current, [step - 1]: value }));
+    if (step < questions.length) setStep((current) => current + 1);
   };
 
   return (
     <div className="goal-overlay" role="dialog" aria-modal="true" aria-labelledby="goal-capture-title">
       <button className="goal-overlay-backdrop" aria-label="Close" onClick={onClose} />
-      <section className="goal-capture">
+      <section className={`goal-capture ${step ? "interview-mode" : ""}`}>
         <button className="goal-close" onClick={onClose} aria-label="Close goal capture">
           <X size={17} />
         </button>
+        {step > 0 ? (
+          <>
+            <div className="interview-top"><span>ADAPTIVE INTERVIEW</span><span>{step} / {questions.length}</span></div>
+            <div className="interview-progress"><span style={{ width: `${(step / questions.length) * 100}%` }} /></div>
+            <p className="eyebrow">{questions[step - 1].label}</p>
+            <h2>{questions[step - 1].title}</h2>
+            <p className="goal-capture-copy">{questions[step - 1].hint}</p>
+            <div className="answer-list">
+              {questions[step - 1].options.map((option) => (
+                <button className={`answer-option ${answers[step - 1] === option ? "selected" : ""}`} key={option} onClick={() => answer(option)}>
+                  <span>{option}</span><ArrowUpRight size={15} />
+                </button>
+              ))}
+            </div>
+            <p className="capture-hint"><Sparkles size={13} /><span>Northstar is narrowing the route around your reality.</span></p>
+          </>
+        ) : (
 
         <div className="goal-capture-icon">
           <Compass size={19} />
@@ -117,6 +147,8 @@ function GoalCapture({ onClose }) {
           <Sparkles size={13} />
           <span>Northstar will ask the questions that actually matter next.</span>
         </div>
+        </>
+        )}
       </section>
     </div>
   );
