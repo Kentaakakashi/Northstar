@@ -114,7 +114,7 @@ function GoalCapture({ onClose }) {
             <p className="capture-hint"><Sparkles size={13} /><span>Northstar is narrowing the route around your reality.</span></p>
           </>
         ) : (
-
+          <>
         <div className="goal-capture-icon">
           <Compass size={19} />
         </div>
@@ -147,7 +147,7 @@ function GoalCapture({ onClose }) {
           <Sparkles size={13} />
           <span>Northstar will ask the questions that actually matter next.</span>
         </div>
-        </>
+          </>
         )}
       </section>
     </div>
