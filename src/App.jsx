@@ -393,7 +393,8 @@ function App() {
   const [activeGoals, setActiveGoals] = useState(() => {
     try {
       const saved = window.localStorage.getItem("northstar-goals");
-      return saved ? JSON.parse(saved) : initialGoals;
+      const parsed = saved ? JSON.parse(saved) : null;
+      return Array.isArray(parsed) ? parsed : initialGoals;
     } catch {
       return initialGoals;
     }
