@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import BlurText from "./components/BlurText";
 import {
   ArrowUpRight,
   ChevronRight,
@@ -28,25 +29,6 @@ const goals = [
     milestones: ["Baseline", "Training system", "Consistency"],
   },
 ];
-
-function StaggeredText({ children, className = "" }) {
-  return (
-    <span className={className} aria-label={children}>
-      {children.split(" ").map((word, index) => (
-        <motion.span
-          key={word + index}
-          className="word"
-          initial={{ opacity: 0, y: 12, filter: "blur(8px)" }}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          transition={{ delay: index * 0.045, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-        >
-          {word}
-          {index < children.split(" ").length - 1 ? " " : ""}
-        </motion.span>
-      ))}
-    </span>
-  );
-}
 
 function RoutePreview() {
   return (
@@ -106,7 +88,7 @@ function App() {
           <section className="hero" id="today">
             <div className="hero-copy">
               <p className="eyebrow"><Sparkles size={13} /> YOUR NEXT BEST MOVE</p>
-              <h1><StaggeredText>Know where you’re going.</StaggeredText></h1>
+              <h1><BlurText text="Know where you’re going." delay={55} stepDuration={0.3} /></h1>
               <p className="hero-sub">
                 Northstar turns a goal into a living route — shaped around your reality,
                 not some generic productivity template.
