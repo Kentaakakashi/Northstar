@@ -410,6 +410,17 @@ function App() {
   const [selectedRoute, setSelectedRoute] = useState("primary");
   const [scenario, setScenario] = useState("baseline");
   const [activeNav, setActiveNav] = useState("today");
+  const [dailyActions, setDailyActions] = useState(() => {
+    try {
+      const saved = JSON.parse(window.localStorage.getItem("northstar-daily-plan") || "null");
+      return saved?.date === localDateKey() && Array.isArray(saved.actions) ? saved.actions : todayActions;
+    } catch {
+      return todayActions;
+    }
+  });
+  const [showActionForm, setShowActionForm] = useState(false);
+  const [actionDraft, setActionDraft] = useState("");
+  const [actionMinutes, setActionMinutes] = useState("20");
   const [completedActions, setCompletedActions] = useState(() => {
     try {
       const saved = JSON.parse(window.localStorage.getItem("northstar-daily-progress") || "null");
@@ -435,12 +446,34 @@ function App() {
     }));
   }, [completedActions]);
 
+  useEffect(() => {
+    window.localStorage.setItem("northstar-daily-plan", JSON.stringify({
+      date: localDateKey(),
+      actions: dailyActions,
+    }));
+  }, [dailyActions]);
+
+  const handleAddAction = (event) => {
+    event.preventDefault();
+    const title = actionDraft.trim();
+    if (!title) return;
+    setDailyActions((current) => [...current, {
+      id: `custom-${Date.now()}`,
+      title,
+      meta: `${actionMinutes} min`,
+      tone: "neutral",
+    }]);
+    setActionDraft("");
+    setActionMinutes("20");
+    setShowActionForm(false);
+  };
+
   const toggleAction = (actionId) => {
     setCompletedActions((current) => current.includes(actionId)
       ? current.filter((id) => id !== actionId)
       : [...current, actionId]);
   };
-  const completedCount = todayActions.filter((action) => completedActions.includes(action.id)).length;
+  const completedCount = dailyActions.filter((action) => completedActions.includes(action.id)).length;
 
   const scenarioAdjustments = {
     baseline: { label: "Current reality", primary: 0, accelerated: 0, fallback: 0, copy: "Nothing has changed. Compare the route on today's assumptions." },
@@ -598,16 +631,16 @@ function App() {
           <section className="section execution-section">
             <div className="section-heading">
               <div><p className="eyebrow">EXECUTION</p><h2>Turn the route into something you can do today.</h2></div>
-              <span className="section-note">{completedCount}/3 complete · 1h 45m planned</span>
+              <span className="section-note">{completedCount}/{dailyActions.length} complete · today's plan</span>
             </div>
             <div className="execution-grid">
               <SpotlightCard className="action-card">
-                <div className="action-head"><span>TODAY</span><span>{completedCount} OF {todayActions.length} COMPLETE</span></div>
-                <div className="action-progress" role="progressbar" aria-label="Today's completed actions" aria-valuemin={0} aria-valuemax={todayActions.length} aria-valuenow={completedCount}>
-                  <span style={{ width: `${(completedCount / todayActions.length) * 100}%` }} />
+                <div className="action-head"><span>TODAY</span><span>{completedCount} OF {dailyActions.length} COMPLETE</span></div>
+                <div className="action-progress" role="progressbar" aria-label="Today's completed actions" aria-valuemin={0} aria-valuemax={dailyActions.length} aria-valuenow={completedCount}>
+                  <span style={{ width: `${dailyActions.length ? (completedCount / dailyActions.length) * 100 : 0}%` }} />
                 </div>
                 <div className="action-list">
-                  {todayActions.map((action, index) => {
+                  {dailyActions.map((action, index) => {
                     const isComplete = completedActions.includes(action.id);
                     return (
                       <button
@@ -623,8 +656,29 @@ function App() {
                     );
                   })}
                 </div>
-                <p className="action-footnote">{completedCount === todayActions.length ? "All planned actions complete. Nice work." : "Tap an action when it’s done. Progress saves automatically and resets tomorrow."}</p>
-                <button className="button button-secondary action-button" onClick={() => setCaptureOpen(true)}><Plus size={14} /> Review goals / add a goal</button>
+                <p className="action-footnote">{dailyActions.length > 0 && completedCount === dailyActions.length ? "All planned actions complete. Nice work." : "Tap an action when it’s done. Progress saves automatically and resets tomorrow."}</p>
+                {showActionForm && (
+                  <form className="add-action-form" onSubmit={handleAddAction}>
+                    <label>Action name
+                      <input value={actionDraft} onChange={(event) => setActionDraft(event.target.value)} maxLength={80} placeholder="e.g. Practise 5 physics sums" required />
+                    </label>
+                    <label>Time budget
+                      <select value={actionMinutes} onChange={(event) => setActionMinutes(event.target.value)}>
+                        <option value="10">10 minutes</option>
+                        <option value="20">20 minutes</option>
+                        <option value="30">30 minutes</option>
+                        <option value="45">45 minutes</option>
+                        <option value="60">1 hour</option>
+                        <option value="90">90 minutes</option>
+                      </select>
+                    </label>
+                    <div className="add-action-controls">
+                      <button type="button" className="button button-quiet" onClick={() => setShowActionForm(false)}>Cancel</button>
+                      <button type="submit" className="button button-primary">Add to today <Plus size={13} /></button>
+                    </div>
+                  </form>
+                )}
+                <button className="button button-secondary action-button" onClick={() => setShowActionForm((visible) => !visible)}><Plus size={14} /> {showActionForm ? "Close action form" : "Add action"}</button>
               </SpotlightCard>
 
               <SpotlightCard className="trajectory-card">
