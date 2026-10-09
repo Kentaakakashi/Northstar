@@ -51,10 +51,17 @@ const routeOptions = [
 ];
 
 const todayActions = [
-  { title: "Finish Physics: Current Electricity", meta: "45 min", tone: "violet" },
-  { title: "Review yesterday's mistakes", meta: "20 min", tone: "neutral" },
-  { title: "Train · upper body", meta: "40 min", tone: "green" },
+  { id: "physics", title: "Finish Physics: Current Electricity", meta: "45 min", tone: "violet" },
+  { id: "review", title: "Review yesterday's mistakes", meta: "20 min", tone: "neutral" },
+  { id: "training", title: "Train · upper body", meta: "40 min", tone: "green" },
 ];
+
+function localDateKey() {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+}
 
 const journey = [
   { title: "Goal captured", date: "Mon", detail: "Northstar understood the destination.", done: true },
@@ -403,6 +410,14 @@ function App() {
   const [selectedRoute, setSelectedRoute] = useState("primary");
   const [scenario, setScenario] = useState("baseline");
   const [activeNav, setActiveNav] = useState("today");
+  const [completedActions, setCompletedActions] = useState(() => {
+    try {
+      const saved = JSON.parse(window.localStorage.getItem("northstar-daily-progress") || "null");
+      return saved?.date === localDateKey() && Array.isArray(saved.completed) ? saved.completed : [];
+    } catch {
+      return [];
+    }
+  });
 
   useEffect(() => {
     document.body.style.overflow = captureOpen || selectedGoal ? "hidden" : "";
@@ -412,6 +427,20 @@ function App() {
   useEffect(() => {
     window.localStorage.setItem("northstar-goals", JSON.stringify(activeGoals));
   }, [activeGoals]);
+
+  useEffect(() => {
+    window.localStorage.setItem("northstar-daily-progress", JSON.stringify({
+      date: localDateKey(),
+      completed: completedActions,
+    }));
+  }, [completedActions]);
+
+  const toggleAction = (actionId) => {
+    setCompletedActions((current) => current.includes(actionId)
+      ? current.filter((id) => id !== actionId)
+      : [...current, actionId]);
+  };
+  const completedCount = todayActions.filter((action) => completedActions.includes(action.id)).length;
 
   const scenarioAdjustments = {
     baseline: { label: "Current reality", primary: 0, accelerated: 0, fallback: 0, copy: "Nothing has changed. Compare the route on today's assumptions." },
@@ -569,20 +598,33 @@ function App() {
           <section className="section execution-section">
             <div className="section-heading">
               <div><p className="eyebrow">EXECUTION</p><h2>Turn the route into something you can do today.</h2></div>
-              <span className="section-note">3 actions · 1h 45m</span>
+              <span className="section-note">{completedCount}/3 complete · 1h 45m planned</span>
             </div>
             <div className="execution-grid">
               <SpotlightCard className="action-card">
-                <div className="action-head"><span>TODAY</span><span>3 actions</span></div>
-                <div className="action-list">
-                  {todayActions.map((action, index) => (
-                    <button className={`action-row ${index === 0 ? "primary-action" : ""}`} key={action.title}>
-                      <span className={`action-check ${action.tone}`}>{index === 0 ? <Zap size={12} /> : index === 1 ? <Check size={12} /> : null}</span>
-                      <span><strong>{action.title}</strong><small>{action.meta}</small></span><ChevronRight size={14} />
-                    </button>
-                  ))}
+                <div className="action-head"><span>TODAY</span><span>{completedCount} OF {todayActions.length} COMPLETE</span></div>
+                <div className="action-progress" role="progressbar" aria-label="Today's completed actions" aria-valuemin={0} aria-valuemax={todayActions.length} aria-valuenow={completedCount}>
+                  <span style={{ width: `${(completedCount / todayActions.length) * 100}%` }} />
                 </div>
-                <button className="button button-secondary action-button"><Plus size={14} /> Add action</button>
+                <div className="action-list">
+                  {todayActions.map((action, index) => {
+                    const isComplete = completedActions.includes(action.id);
+                    return (
+                      <button
+                        className={`action-row ${index === 0 ? "primary-action" : ""} ${isComplete ? "is-complete" : ""}`}
+                        key={action.id}
+                        onClick={() => toggleAction(action.id)}
+                        aria-pressed={isComplete}
+                      >
+                        <span className={`action-check ${action.tone} ${isComplete ? "checked" : ""}`}>{isComplete ? <Check size={12} /> : index === 0 ? <Zap size={12} /> : null}</span>
+                        <span><strong>{action.title}</strong><small>{isComplete ? "Completed today" : action.meta}</small></span>
+                        {isComplete ? <Check size={14} /> : <ChevronRight size={14} />}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="action-footnote">{completedCount === todayActions.length ? "All planned actions complete. Nice work." : "Tap an action when it’s done. Progress saves automatically and resets tomorrow."}</p>
+                <button className="button button-secondary action-button" onClick={() => setCaptureOpen(true)}><Plus size={14} /> Review goals / add a goal</button>
               </SpotlightCard>
 
               <SpotlightCard className="trajectory-card">
