@@ -52,3 +52,10 @@
 .action-check.checked{color:#8fd7a8;background:rgba(143,215,168,.12);border-color:rgba(143,215,168,.28)}
 .action-footnote{margin:10px 2px 0;color:#62626b;font-size:9px;line-height:1.6}
 @media(prefers-reduced-motion:reduce){.action-progress>span{transition:none}}
+
+.add-action-form{display:grid;gap:10px;margin-top:13px;padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(255,255,255,.018)}
+.add-action-form label{display:grid;gap:6px;color:#8a8a94;font-size:9px;font-weight:700;letter-spacing:.05em}
+.add-action-form input,.add-action-form select{width:100%;min-width:0;padding:10px 11px;border:1px solid rgba(255,255,255,.1);border-radius:7px;outline:none;background:#111113;color:#dedee5;font:500 11px Manrope,sans-serif;letter-spacing:0}
+.add-action-form input:focus,.add-action-form select:focus{border-color:rgba(155,140,255,.55);box-shadow:0 0 0 3px rgba(155,140,255,.08)}
+.add-action-controls{display:flex;justify-content:flex-end;align-items:center;gap:8px}
+.add-action-controls .button{font-size:10px}
